@@ -1,24 +1,32 @@
 """
 Модуль для отправки итогового отчёта в Telegram-чат через aiogram (Bot API).
 """
+from abc import ABC, abstractmethod
 from aiogram import Bot
 from aiogram.enums import ParseMode
 from datetime import datetime
-from typing import Dict
 
 from src.config.config import load_config
 
 
-class TelegramReportSender:
-    def __init__(self, bot_token: str, hashtags: list):
-        self.bot = Bot(token=bot_token)
-        self.hashtags = hashtags
+# Интерфейс отправителя отчётов
+class IReportSender(ABC):
+    @abstractmethod
+    async def send_report(self, report_json: dict, chat_id: str):
+        pass
+
+
+class TelegramReportSender(IReportSender):
+    def __init__(self, config=None):
+        self.config = config or load_config()
+        self.bot_token = self.config['BOT_TOKEN']
+        self.bot = Bot(token=self.bot_token)
 
     @staticmethod
     def escape_html(text: str) -> str:
         return (text.replace('&', '&amp;')
-                    .replace('<', '&lt;')
-                    .replace('>', '&gt;'))
+                .replace('<', '&lt;')
+                .replace('>', '&gt;'))
 
     def format_report(self, report_json: dict) -> str:
         parts = []
@@ -35,15 +43,14 @@ class TelegramReportSender:
                 parts.append(f"{i}. {self.escape_html(item)}")
             parts.append("")
         if report_json.get('topics_to_discuss'):
-            parts.append("� <b>Темы для нытинга:</b>")
+            parts.append("🦨 <b>Темы для нытинга:</b>")
             for i, item in enumerate(report_json['topics_to_discuss'], start=1):
                 parts.append(f"{i}. {self.escape_html(item)}")
             parts.append("")
-        hashtags = ' '.join(f"#{hashtag}" for hashtag in self.hashtags)
+        hashtags = ' '.join(f"#{hashtag}" for hashtag in self.config.get('HASHTAGS', []))
         parts.append(f"{hashtags}\n")
         return '\n'.join(parts)
 
     async def send_report(self, report_json: dict, chat_id: str):
         text = self.format_report(report_json)
-        text = self.escape_html(text)
-        await self.bot.send_message(chat_id, text, parse_mode=ParseMode.HTML)
+        await self.bot.send_message('-1002551893104', text, parse_mode=ParseMode.HTML)

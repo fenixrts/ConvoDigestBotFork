@@ -1,16 +1,34 @@
 """
 Модуль для хранения и поиска эмбеддингов сообщений (FAISS).
 """
+from abc import ABC, abstractmethod
+from typing import List, Dict, Optional
 import faiss
 import numpy as np
-from typing import List, Dict, Any, Optional
 from openai import AsyncOpenAI
-from src.config.config import load_config
 
-class RAGService:
-    def __init__(self, client, top_k: int = 20):
-        self.client = client
-        self.top_k = top_k
+
+# Интерфейс RAG
+class IRAGService(ABC):
+    @abstractmethod
+    async def add_messages(self, messages: List[Dict]):
+        pass
+
+    @abstractmethod
+    async def get_query_embedding(self, query: str) -> np.ndarray:
+        pass
+
+    @abstractmethod
+    def search(self, query_emb: np.ndarray, top_k: Optional[int] = None) -> List[Dict]:
+        pass
+
+
+# Реализация на FAISS
+class FaissRAGService(IRAGService):
+    def __init__(self, rag_config):
+        self.client = AsyncOpenAI(api_key=rag_config['api_key'], base_url=rag_config['base_url'])
+        self.model = rag_config['model']
+        self.top_k = rag_config['top_k']
         self.index = None
         self.messages: List[Dict] = []
         self.embeddings: List[np.ndarray] = []
@@ -29,7 +47,6 @@ class RAGService:
         self.embeddings.extend(embeddings)
 
     async def get_embeddings(self, texts: List[str]) -> List[np.ndarray]:
-        # Используем RAG API для получения эмбеддингов
         response = await self.client.embeddings.create(
             model=self.model,
             input=texts
@@ -49,41 +66,25 @@ class RAGService:
         return [self.messages[i] for i in I[0] if i < len(self.messages)]
 
     def _message_context(self, msg: Dict) -> str:
-        """
-        Формирует текстовый контекст для embedding, включая вложения.
-        """
         parts = []
         username = msg.get('username', 'Anonymous')
         text = msg.get('text', '')
         parts.append(f"{username}: {text}")
-
-        # Фото
         if msg.get('photo'):
             caption = msg.get('caption', '')
             parts.append(f"[Фото] {caption}")
-
-        # Документ
         if msg.get('document'):
             doc_name = msg.get('document_name', 'Документ')
             caption = msg.get('caption', '')
             parts.append(f"[Документ: {doc_name}] {caption}")
-
-        # Видео
         if msg.get('video'):
             caption = msg.get('caption', '')
             parts.append(f"[Видео] {caption}")
-
-        # Голосовое
         if msg.get('voice'):
             parts.append("[Голосовое сообщение]")
-
-        # Ссылки
         if msg.get('links'):
             for link in msg['links']:
                 parts.append(f"[Ссылка] {link}")
-
-        # Прочие вложения
         if msg.get('media_type'):
             parts.append(f"[Вложение: {msg['media_type']}] {msg.get('caption', '')}")
-
         return " ".join(parts)

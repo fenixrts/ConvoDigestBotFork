@@ -10,7 +10,7 @@ def load_config():
     llm_provider = os.getenv('LLM_PROVIDER', 'openai')
     llm_model = os.getenv('LLM_MODEL', os.getenv('LLM_MODEL', 'gpt-3.5-turbo'))
     llm_base_url = os.getenv('LLM_BASE_URL', os.getenv('LLM_BASE_URL'))
-    llm_api_key = os.getenv('LLM_API_KEY', os.getenv('LLM_API_KEY', ''))
+    llm_api_key = os.getenv('OPENAI_API_KEY', '')
 
     rag_model = os.getenv('RAG_MODEL', os.getenv('RAG_MODEL', 'text-embedding-3-small'))
     rag_base_url = os.getenv('RAG_BASE_URL', os.getenv('RAG_BASE_URL'))
