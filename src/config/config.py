@@ -43,7 +43,8 @@ def load_config():
             'api_key': rag_api_key,
             'query': rag_query,
             'top_k': rag_top_k
-        }
+        },
+        'USE_AGENT': os.getenv('USE_AGENT', 'false').lower() == 'true'
     }
 
 

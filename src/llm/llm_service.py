@@ -6,6 +6,7 @@ import json
 from langchain_core.messages import SystemMessage, HumanMessage
 from src.llm.prompts import SYSTEM_PROMPT
 from src.llm.rag_service import IRAGService
+from src.llm.rag_agent import RAGAgent
 from langchain_core.exceptions import OutputParserException
 
 
@@ -18,11 +19,23 @@ class ILLM(ABC):
 
 # LLMService теперь принимает ILLM и IRAGService
 class LLMService:
-    def __init__(self, llm: ILLM, rag_service: IRAGService):
+    def __init__(self, llm: ILLM, rag_service: IRAGService, use_agent: bool = True):
         self.llm = llm
         self.rag_service = rag_service
+        self.use_agent = use_agent
+        if use_agent:
+            self.rag_agent = RAGAgent(llm, rag_service)
 
     async def summarize(self, messages: List[Dict], query: str, top_k: int = 20) -> Dict:
+        if self.use_agent and hasattr(self, 'rag_agent'):
+            logging.info("Использую простого RAG агента для создания summary")
+            return await self.rag_agent.summarize(messages, query, top_k)
+        else:
+            logging.info("Использую стандартный RAG подход")
+            return await self._standard_summarize(messages, query, top_k)
+    
+    async def _standard_summarize(self, messages: List[Dict], query: str, top_k: int = 20) -> Dict:
+        """Стандартный RAG подход без агента."""
         await self.rag_service.add_messages(messages)
         query_emb = await self.rag_service.get_query_embedding(query)
         relevant_messages = self.rag_service.search(query_emb, top_k=top_k)

@@ -5,9 +5,9 @@ python-dotenv~=1.1.1
 openai~=1.97.0
 tiktoken
 faiss-cpu~=1.11.0.post1
-langchain
-langchain-openai~=0.3.28
-langchain-core~=0.3.69
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langchain-core>=0.3.0
 numpy~=2.3.1
-pydantic~=2.11.7
+pydantic>=2.11.7
 langchain-ollama

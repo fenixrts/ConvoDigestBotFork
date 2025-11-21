@@ -43,6 +43,6 @@ RESPONSE_FORMAT = {
 }
 
 class LLMResponse(BaseModel):
-    main_fragments: list = Field(description="Главные фрагменты отчета")
-    failures_and_rage: list = Field(description="Ошибки и негативные моменты")
-    topics_to_discuss: list = Field(description="Темы для обсуждения")
+    main_fragments: list[str] = Field(description="Главные фрагменты отчета")
+    failures_and_rage: list[str] = Field(description="Ошибки и негативные моменты")
+    topics_to_discuss: list[str] = Field(description="Темы для обсуждения")
