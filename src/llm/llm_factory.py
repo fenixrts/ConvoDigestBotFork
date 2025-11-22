@@ -1,7 +1,10 @@
+import logging
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 from src.config.schemas import LLMResponse
+
+logger = logging.getLogger(__name__)
 
 class LLMFactory:
     @staticmethod
@@ -11,6 +14,8 @@ class LLMFactory:
         base_url = llm_config.get('base_url')
         api_key = llm_config.get('api_key')
         output_parser = JsonOutputParser(pydantic_object=LLMResponse)
+
+        logger.info(f"Creating LLM with provider: {provider}, model: {model_name}, base_url: {base_url}")
 
         if provider == 'openai':
             llm = ChatOpenAI(

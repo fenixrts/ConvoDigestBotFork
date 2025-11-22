@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 ENV PYTHONPATH=/app
 
-COPY . .
+#COPY . .
 
 # По умолчанию запускать оба процесса (бот и планировщик)
 CMD ["python", "main.py"]
