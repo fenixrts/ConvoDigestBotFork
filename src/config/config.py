@@ -12,6 +12,7 @@ def load_config():
     llm_base_url = os.getenv('LLM_BASE_URL', os.getenv('LLM_BASE_URL'))
     llm_api_key = os.getenv('OPENAI_API_KEY', '')
 
+    rag_provider = os.getenv('RAG_PROVIDER', 'openai')
     rag_model = os.getenv('RAG_MODEL', os.getenv('RAG_MODEL', 'text-embedding-3-small'))
     rag_base_url = os.getenv('RAG_BASE_URL', os.getenv('RAG_BASE_URL'))
     rag_api_key = os.getenv('RAG_API_KEY', os.getenv('RAG_API_KEY'))
@@ -38,6 +39,7 @@ def load_config():
             'api_key': llm_api_key,
         },
         'RAG_CONFIG': {
+            'provider': rag_provider,
             'model': rag_model,
             'base_url': rag_base_url,
             'api_key': rag_api_key,

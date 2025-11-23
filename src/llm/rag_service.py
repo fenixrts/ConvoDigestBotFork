@@ -5,7 +5,10 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Optional
 import faiss
 import numpy as np
-from openai import AsyncOpenAI
+import logging
+from src.llm.rag_factory import RAGFactory
+
+logger = logging.getLogger(__name__)
 
 
 # Интерфейс RAG
@@ -26,8 +29,8 @@ class IRAGService(ABC):
 # Реализация на FAISS
 class FaissRAGService(IRAGService):
     def __init__(self, rag_config):
-        self.client = AsyncOpenAI(api_key=rag_config['api_key'], base_url=rag_config['base_url'])
-        self.model = rag_config['model']
+        logger.info(f"{__name__} initialized with provider={rag_config.get('provider', 'openai')}, model={rag_config.get('model')}, base_url={rag_config.get('base_url')}")
+        self.embedding_client = RAGFactory.create(rag_config)
         self.top_k = rag_config['top_k']
         self.index = None
         self.messages: List[Dict] = []
@@ -47,18 +50,14 @@ class FaissRAGService(IRAGService):
         self.embeddings.extend(embeddings)
 
     async def get_embeddings(self, texts: List[str]) -> List[np.ndarray]:
-        response = await self.client.embeddings.create(
-            model=self.model,
-            input=texts
-        )
-        return [np.array(data.embedding, dtype=np.float32) for data in response.data]
+        """Получает эмбеддинги для списка текстов."""
+        embeddings = await self.embedding_client.create_embeddings(texts)
+        return [np.array(emb, dtype=np.float32) for emb in embeddings]
 
     async def get_query_embedding(self, query: str) -> np.ndarray:
-        response = await self.client.embeddings.create(
-            model=self.model,
-            input=[query]
-        )
-        return np.array(response.data[0].embedding, dtype=np.float32)
+        """Получает эмбеддинг для запроса."""
+        embedding = await self.embedding_client.create_embedding(query)
+        return np.array(embedding, dtype=np.float32)
 
     def search(self, query_emb: np.ndarray, top_k: Optional[int] = None) -> List[Dict]:
         top_k = top_k or self.top_k
